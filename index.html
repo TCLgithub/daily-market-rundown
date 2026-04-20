@@ -318,7 +318,57 @@
       .nav-links { display: none; }
       .macro-grid { grid-template-columns: repeat(2, 1fr); }
       .market-status-bar { gap: 12px; }
+      .update-fab { bottom: 16px; right: 16px; }
+      .update-panel { right: 16px; bottom: 70px; width: calc(100vw - 32px); }
     }
+
+    /* ── Update Panel ── */
+    .update-fab {
+      position: fixed; bottom: 28px; right: 28px; z-index: 1000;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #58a6ff; color: #0d1117;
+      border: none; cursor: pointer; font-size: 22px;
+      box-shadow: 0 4px 20px rgba(88,166,255,0.4);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .update-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(88,166,255,0.55); }
+    .update-panel {
+      position: fixed; bottom: 92px; right: 28px; z-index: 999;
+      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+      padding: 16px; width: 280px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      display: none; flex-direction: column; gap: 8px;
+    }
+    .update-panel.open { display: flex; }
+    .update-panel-title {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+      color: #8b949e; margin-bottom: 4px; font-weight: 600;
+    }
+    .update-btn {
+      display: flex; align-items: center; gap: 10px;
+      background: #1c2230; border: 1px solid #30363d; border-radius: 8px;
+      padding: 10px 12px; cursor: pointer; color: #e6edf3;
+      font-size: 13px; font-weight: 500; text-align: left;
+      transition: background 0.15s, border-color 0.15s;
+      width: 100%;
+    }
+    .update-btn:hover { background: #21262d; border-color: #58a6ff; }
+    .update-btn .flag { font-size: 18px; }
+    .update-btn .btn-label { flex: 1; }
+    .update-btn .btn-time { font-size: 10px; color: #8b949e; }
+    .update-btn-all {
+      background: #0d2137; border-color: #58a6ff; color: #58a6ff; font-weight: 600;
+    }
+    .update-btn-all:hover { background: #1a3a5c; }
+    .copy-toast {
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+      background: #3fb950; color: #0d1117; font-size: 12px; font-weight: 600;
+      padding: 8px 18px; border-radius: 20px; opacity: 0;
+      transition: opacity 0.3s; pointer-events: none; z-index: 2000;
+    }
+    .copy-toast.show { opacity: 1; }
+    .update-divider { height: 1px; background: #30363d; margin: 4px 0; }
   </style>
 </head>
 <body>
@@ -436,9 +486,9 @@
 <!-- ARCHIVE BAR -->
 <div class="archive-bar" id="archive-bar">
   <span class="archive-bar-label">Archive:</span>
-  <button class="archive-date-btn active market-us" onclick="showBriefing('us-2026-04-21', this)">🇺🇸 Tue Apr 21</button>
-  <button class="archive-date-btn market-hk" onclick="showBriefing('hk-2026-04-21', this)">🇭🇰 Tue Apr 21</button>
-  <button class="archive-date-btn market-sg" onclick="showBriefing('sg-2026-04-21', this)">🇸🇬 Tue Apr 21</button>
+  <button class="archive-date-btn active market-us" onclick="showBriefing('us-2026-04-20', this)">🇺🇸 Mon Apr 20</button>
+  <button class="archive-date-btn market-hk" onclick="showBriefing('hk-2026-04-20', this)">🇭🇰 Mon Apr 20</button>
+  <button class="archive-date-btn market-sg" onclick="showBriefing('sg-2026-04-20', this)">🇸🇬 Mon Apr 20</button>
   <button class="archive-date-btn market-my" onclick="showBriefing('my-2026-04-20', this)">🇲🇾 Mon Apr 20</button>
 </div>
 
@@ -447,9 +497,9 @@
   <!-- ════════════════════════════════ US PANEL ════════════════════════════════ -->
   <div class="market-panel visible" id="panel-us">
 
-    <div class="briefing" id="briefing-us-2026-04-21">
+    <div class="briefing" id="briefing-us-2026-04-20">
       <div class="briefing-header us-header">
-        <div class="briefing-date">🇺🇸 Tuesday, April 21, 2026</div>
+        <div class="briefing-date">🇺🇸 Monday, April 20, 2026</div>
         <span class="briefing-badge badge-us">US Pre-Market</span>
         <span class="briefing-subtitle">Sources: Reuters · CNBC · Schwab · Yahoo Finance · MarketBeat · RTX IR · GE IR</span>
       </div>
@@ -650,10 +700,10 @@
   <!-- ════════════════════════════════ HK PANEL ════════════════════════════════ -->
   <div class="market-panel" id="panel-hk">
 
-    <!-- HK BRIEFING: April 21, 2026 -->
-    <div class="briefing" id="briefing-hk-2026-04-21">
+    <!-- HK BRIEFING: April 20, 2026 -->
+    <div class="briefing" id="briefing-hk-2026-04-20">
       <div class="briefing-header hk-header">
-        <div class="briefing-date">🇭🇰 Tuesday, April 21, 2026</div>
+        <div class="briefing-date">🇭🇰 Monday, April 20, 2026</div>
         <span class="briefing-badge badge-hk">HK Pre-Market</span>
         <span class="briefing-subtitle">Sources: Futunn · SCMP Business · HSI.com.hk · TradingEconomics · Nomura · HKEX</span>
       </div>
@@ -840,10 +890,10 @@
 
   <!-- ════════════════════════════════ SG PANEL ════════════════════════════════ -->
   <div class="market-panel" id="panel-sg">
-    <!-- SG BRIEFING: April 21, 2026 -->
-    <div class="briefing" id="briefing-sg-2026-04-21">
+    <!-- SG BRIEFING: April 20, 2026 -->
+    <div class="briefing" id="briefing-sg-2026-04-20">
       <div class="briefing-header sg-header">
-        <div class="briefing-date">🇸🇬 Tuesday, April 21, 2026</div>
+        <div class="briefing-date">🇸🇬 Monday, April 20, 2026</div>
         <span class="briefing-badge badge-sg">SGX Pre-Market</span>
         <span class="briefing-subtitle">Sources: Growbeansprout · TheFinance.sg · DBS Research · SGX · Bernama · OCBC IR</span>
       </div>
@@ -1347,6 +1397,87 @@
     const id = b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
     if (id) {
       b.onclick = function() { showBriefing(id, this); };
+    }
+  });
+</script>
+
+<!-- ── Update Panel ── -->
+<button class="update-fab" onclick="toggleUpdatePanel()" title="Update markets">↻</button>
+
+<div class="update-panel" id="updatePanel">
+  <div class="update-panel-title">Update Market Rundown</div>
+
+  <button class="update-btn update-btn-all" onclick="copyCmd('all')">
+    <span class="flag">🔄</span>
+    <span class="btn-label">Update All Markets</span>
+  </button>
+
+  <div class="update-divider"></div>
+
+  <button class="update-btn" onclick="copyCmd('us')">
+    <span class="flag">🇺🇸</span>
+    <span class="btn-label">US Market (NYSE/NASDAQ)</span>
+    <span class="btn-time">8:30 AM ET auto</span>
+  </button>
+  <button class="update-btn" onclick="copyCmd('hk')">
+    <span class="flag">🇭🇰</span>
+    <span class="btn-label">Hong Kong (HKEX)</span>
+    <span class="btn-time">9:00 AM MYT auto</span>
+  </button>
+  <button class="update-btn" onclick="copyCmd('sg')">
+    <span class="flag">🇸🇬</span>
+    <span class="btn-label">Singapore (SGX)</span>
+    <span class="btn-time">9:00 AM MYT auto</span>
+  </button>
+  <button class="update-btn" onclick="copyCmd('my')">
+    <span class="flag">🇲🇾</span>
+    <span class="btn-label">Malaysia (Bursa)</span>
+    <span class="btn-time">9:00 AM MYT auto</span>
+  </button>
+
+  <div class="update-divider"></div>
+  <div style="font-size:11px;color:#8b949e;line-height:1.5;">Click a market to copy the update command, then paste it into Claude chat.</div>
+</div>
+
+<div class="copy-toast" id="copyToast"></div>
+
+<script>
+  var updateCmds = {
+    us:  'Run the US market rundown',
+    hk:  'Run the HK market rundown',
+    sg:  'Run the SG market rundown',
+    my:  'Run the MY market rundown',
+    all: 'Update all markets — run the US, HK, SG and MY market rundowns'
+  };
+
+  function toggleUpdatePanel() {
+    var p = document.getElementById('updatePanel');
+    p.classList.toggle('open');
+  }
+
+  function copyCmd(market) {
+    var cmd = updateCmds[market];
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(cmd).then(function() { showToast('Copied! Paste into Claude chat.'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = cmd; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      showToast('Copied! Paste into Claude chat.');
+    }
+    document.getElementById('updatePanel').classList.remove('open');
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('copyToast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 2500);
+  }
+
+  document.addEventListener('click', function(e) {
+    var panel = document.getElementById('updatePanel');
+    if (!panel.contains(e.target) && !e.target.classList.contains('update-fab')) {
+      panel.classList.remove('open');
     }
   });
 </script>
