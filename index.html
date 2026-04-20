@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daily Market Rundown</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2230;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #e3b341;
+      --blue: #58a6ff;
+      --orange: #d29922;
+      --purple: #bc8cff;
+      --accent: #1f6feb;
+
+      /* Market brand colours */
+      --us-color: #58a6ff;
+      --hk-color: #f85149;
+      --sg-color: #d4a017;
+      --my-color: #3fb950;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-title { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; color: var(--blue); }
+    .topbar-title span { color: var(--text); }
+    .topbar-meta { color: var(--muted); font-size: 12px; }
+    .nav-links { display: flex; gap: 16px; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 12px;
+      padding: 4px 8px; border-radius: 4px; transition: all 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--surface2); }
+
+    /* ── MARKET SELECTOR ── */
+    .market-selector-bar {
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      overflow-x: auto;
+    }
+    .market-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.2s;
+      white-space: nowrap;
+      user-select: none;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .market-tab:hover { color: var(--text); background: var(--surface2); }
+    .market-tab.active-us  { color: var(--us-color);  border-bottom-color: var(--us-color);  }
+    .market-tab.active-hk  { color: var(--hk-color);  border-bottom-color: var(--hk-color);  }
+    .market-tab.active-sg  { color: var(--sg-color);  border-bottom-color: var(--sg-color);  }
+    .market-tab.active-my  { color: var(--my-color);  border-bottom-color: var(--my-color);  }
+    .market-flag { font-size: 16px; }
+    .market-tab-sub { font-size: 10px; font-weight: 400; color: var(--muted); margin-top: 1px; }
+    .market-tab-label { display: flex; flex-direction: column; }
+    .market-tab-badge {
+      font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-left: 4px;
+    }
+    .badge-scheduled { background: #1a3a1a; color: var(--green); border: 1px solid #2d5a2d; }
+    .badge-adhoc     { background: #1a2a3a; color: var(--blue);  border: 1px solid #254a6a; }
+    .market-divider  { width: 1px; background: var(--border); margin: 8px 0; }
+
+    /* ── ARCHIVE BAR ── */
+    .archive-bar {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    .archive-bar-label { color: var(--muted); white-space: nowrap; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .archive-date-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 3px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 11px;
+      transition: all 0.15s;
+    }
+    .archive-date-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .archive-date-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    /* Per-market archive colouring */
+    .archive-date-btn.market-us { border-left: 3px solid var(--us-color); }
+    .archive-date-btn.market-hk { border-left: 3px solid var(--hk-color); }
+    .archive-date-btn.market-sg { border-left: 3px solid var(--sg-color); }
+    .archive-date-btn.market-my { border-left: 3px solid var(--my-color); }
+
+    /* ── MARKET STATUS BAR ── */
+    .market-status-bar {
+      background: #0a0f16;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 24px;
+      display: flex;
+      gap: 24px;
+      overflow-x: auto;
+      font-size: 12px;
+      align-items: center;
+    }
+    .mkt-status-item { display: flex; flex-direction: column; align-items: flex-start; white-space: nowrap; }
+    .mkt-status-name { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mkt-status-index { color: var(--text); font-weight: 700; font-size: 13px; }
+    .mkt-status-time  { font-size: 10px; margin-top: 1px; }
+    .status-open   { color: var(--green); }
+    .status-closed { color: var(--red); }
+    .status-pre    { color: var(--yellow); }
+    .mkt-status-sep { width: 1px; height: 32px; background: var(--border); }
+
+    /* ── LAYOUT ── */
+    .wrapper { max-width: 1380px; margin: 0 auto; padding: 20px 24px; }
+
+    /* ── MARKET PANEL ── */
+    .market-panel { display: none; }
+    .market-panel.visible { display: block; }
+
+    /* ── BRIEFING ENTRY ── */
+    .briefing { margin-bottom: 48px; }
+    .briefing-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 2px solid var(--accent);
+    }
+    .briefing-header.us-header { border-bottom-color: var(--us-color); }
+    .briefing-header.hk-header { border-bottom-color: var(--hk-color); }
+    .briefing-header.sg-header { border-bottom-color: var(--sg-color); }
+    .briefing-header.my-header { border-bottom-color: var(--my-color); }
+    .briefing-date { font-size: 22px; font-weight: 700; color: var(--text); }
+    .briefing-badge {
+      color: #fff; font-size: 10px; font-weight: 700;
+      padding: 3px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .badge-us { background: var(--us-color); }
+    .badge-hk { background: var(--hk-color); }
+    .badge-sg { background: var(--sg-color); }
+    .badge-my { background: #1a5c1a; border: 1px solid var(--my-color); color: var(--my-color); }
+    .briefing-subtitle { color: var(--muted); font-size: 12px; margin-left: auto; }
+
+    /* ── SECTION ── */
+    .section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 16px; overflow: hidden;
+    }
+    .section-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; user-select: none;
+    }
+    .section-header:hover { background: #222c3a; }
+    .section-icon { font-size: 16px; }
+    .section-title { font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); text-transform: uppercase; }
+    .section-tag { margin-left: auto; font-size: 11px; color: var(--muted); }
+    .section-chevron { margin-left: 8px; font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+    .section-chevron.open { transform: rotate(90deg); }
+    .section-body { padding: 16px; display: block; }
+    .section-body.collapsed { display: none; }
+
+    /* ── MACRO OVERVIEW ── */
+    .macro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .macro-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+    .macro-card-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .macro-card-value { font-size: 20px; font-weight: 700; }
+    .macro-card-change { font-size: 12px; margin-top: 2px; }
+    .up { color: var(--green); } .down { color: var(--red); } .neutral { color: var(--yellow); }
+    .risk-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .risk-bullish { background: #1a3a1a; color: var(--green); border: 1px solid #2d5a2d; }
+    .risk-bearish  { background: #3a1a1a; color: var(--red);   border: 1px solid #5a2d2d; }
+    .risk-caution  { background: #3a301a; color: var(--yellow); border: 1px solid #5a4a2d; }
+    .macro-body p  { color: var(--muted); line-height: 1.7; margin-bottom: 8px; font-size: 13px; }
+    .macro-body strong { color: var(--text); }
+    .macro-body .highlight { background: #1a2a3a; border-left: 3px solid var(--blue);   padding: 8px 12px; border-radius: 0 4px 4px 0; margin: 8px 0; font-size: 13px; }
+    .macro-body .warning   { background: #3a2a1a; border-left: 3px solid var(--orange); padding: 8px 12px; border-radius: 0 4px 4px 0; margin: 8px 0; font-size: 13px; color: var(--orange); }
+
+    /* ── TABLES ── */
+    .cal-table, .earnings-table, .week-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    .cal-table th, .earnings-table th, .week-table th {
+      text-align: left; padding: 8px 12px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border);
+    }
+    .cal-table td, .earnings-table td, .week-table td {
+      padding: 10px 12px; border-bottom: 1px solid #21262d; vertical-align: top;
+    }
+    .cal-table tr:last-child td, .earnings-table tr:last-child td, .week-table tr:last-child td { border-bottom: none; }
+    .cal-table tr:hover td, .earnings-table tr:hover td, .week-table tr:hover td { background: #1c2230; }
+    .cal-time  { color: var(--yellow); font-weight: 600; white-space: nowrap; }
+    .cal-event { color: var(--text); font-weight: 600; }
+    .cal-note  { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .imp-high  { border-left: 3px solid var(--red);    padding-left: 9px !important; }
+    .imp-med   { border-left: 3px solid var(--yellow); padding-left: 9px !important; }
+    .ticker    { color: var(--blue); font-weight: 700; font-family: monospace; font-size: 13px; }
+    .company-name { color: var(--text); }
+    .est-value { color: var(--muted); }
+    .earnings-note { font-size: 12px; color: var(--muted); }
+    .earnings-section { margin-bottom: 16px; }
+    .earnings-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 8px 0 6px; display: flex; align-items: center; gap: 8px; }
+    .week-day { color: var(--yellow); font-weight: 700; white-space: nowrap; }
+    .week-today-row td { background: #1a2a1a !important; }
+    .week-today-row .week-day { color: var(--green); }
+    .week-events { color: var(--muted); }
+
+    /* ── STOCK CARDS ── */
+    .stock-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; }
+    .stock-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+    .stock-card.bull::before   { background: var(--green); }
+    .stock-card.bear::before   { background: var(--red); }
+    .stock-card.binary::before { background: var(--yellow); }
+    .stock-card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .stock-ticker-big  { font-size: 18px; font-weight: 800; color: var(--blue); font-family: monospace; min-width: 60px; }
+    .stock-name  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .stock-catalyst-tag { background: #1a2a3a; color: var(--blue); border: 1px solid #254a6a; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .stock-bias-tag { margin-left: auto; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .bias-bull   { background: #1a3a1a; color: var(--green);  border: 1px solid #2d5a2d; }
+    .bias-bear   { background: #3a1a1a; color: var(--red);    border: 1px solid #5a2d2d; }
+    .bias-binary { background: #3a301a; color: var(--yellow); border: 1px solid #5a4a2d; }
+    .stock-body  { font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .stock-body strong { color: var(--text); }
+
+    /* ── THEMES ── */
+    .theme-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-bottom: 10px; }
+    .theme-number { display: inline-block; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; text-align: center; line-height: 20px; margin-right: 8px; }
+    .theme-title { font-weight: 700; font-size: 13px; color: var(--text); display: inline; }
+    .theme-body  { color: var(--muted); font-size: 13px; line-height: 1.65; margin-top: 6px; }
+    .theme-body strong { color: var(--text); }
+
+    /* ── SECONDARY NAMES ── */
+    .secondary-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .secondary-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 12px; display: flex; align-items: flex-start; gap: 8px; }
+    .secondary-ticker { color: var(--blue); font-weight: 700; font-family: monospace; min-width: 55px; }
+    .secondary-note   { color: var(--muted); }
+
+    /* ── WATCHLIST ── */
+    .watchlist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    .watch-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-size: 13px; }
+    .watch-bullet { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); display: inline-block; margin-right: 8px; vertical-align: middle; }
+    .watch-item strong { color: var(--text); }
+    .watch-item p { color: var(--muted); margin-top: 4px; font-size: 12px; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 80px 24px; color: var(--muted);
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .empty-state-desc  { font-size: 14px; max-width: 400px; margin: 0 auto 20px; line-height: 1.6; }
+    .run-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #fff; border: none;
+      padding: 10px 20px; border-radius: 6px; font-size: 13px;
+      font-weight: 600; cursor: pointer; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .run-btn:hover { background: #1a5fcc; }
+    .market-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 24px; max-width: 700px; margin-left: auto; margin-right: auto; }
+    .market-info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: left; }
+    .market-info-card h4 { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+    .market-info-card p  { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .market-info-card.us h4 { color: var(--us-color); }
+    .market-info-card.hk h4 { color: var(--hk-color); }
+    .market-info-card.sg h4 { color: var(--sg-color); }
+    .market-info-card.my h4 { color: var(--my-color); }
+
+    /* ── FOOTER ── */
+    .footer { text-align: center; padding: 24px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 32px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .topbar { flex-wrap: wrap; gap: 8px; }
+      .nav-links { display: none; }
+      .macro-grid { grid-template-columns: repeat(2, 1fr); }
+      .market-status-bar { gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<nav class="topbar">
+  <div class="topbar-title">📈 <span>Daily Market</span> Rundown</div>
+  <div class="nav-links">
+    <a href="#" onclick="navTo('macro');return false;">Macro</a>
+    <a href="#" onclick="navTo('calendar');return false;">Calendar</a>
+    <a href="#" onclick="navTo('earnings');return false;">Earnings</a>
+    <a href="#" onclick="navTo('stocks');return false;">Stocks in Play</a>
+    <a href="#" onclick="navTo('themes');return false;">Themes</a>
+    <a href="#" onclick="navTo('week');return false;">Week Ahead</a>
+  </div>
+  <div class="topbar-meta" id="live-time"></div>
+</nav>
+
+<!-- MARKET SELECTOR TABS -->
+<div class="market-selector-bar">
+  <button class="market-tab active-us" onclick="switchMarket('us', this)">
+    <span class="market-flag">🇺🇸</span>
+    <span class="market-tab-label">
+      <span>US Markets</span>
+      <span class="market-tab-sub">NYSE · NASDAQ</span>
+    </span>
+    <span class="market-tab-badge badge-scheduled">Scheduled</span>
+  </button>
+  <div class="market-divider"></div>
+  <button class="market-tab" onclick="switchMarket('hk', this)">
+    <span class="market-flag">🇭🇰</span>
+    <span class="market-tab-label">
+      <span>Hong Kong</span>
+      <span class="market-tab-sub">HKEX · HSI</span>
+    </span>
+    <span class="market-tab-badge badge-adhoc">On Demand</span>
+  </button>
+  <div class="market-divider"></div>
+  <button class="market-tab" onclick="switchMarket('sg', this)">
+    <span class="market-flag">🇸🇬</span>
+    <span class="market-tab-label">
+      <span>Singapore</span>
+      <span class="market-tab-sub">SGX · STI</span>
+    </span>
+    <span class="market-tab-badge badge-adhoc">On Demand</span>
+  </button>
+  <div class="market-divider"></div>
+  <button class="market-tab" onclick="switchMarket('my', this)">
+    <span class="market-flag">🇲🇾</span>
+    <span class="market-tab-label">
+      <span>Malaysia</span>
+      <span class="market-tab-sub">Bursa · KLCI</span>
+    </span>
+    <span class="market-tab-badge badge-adhoc">On Demand</span>
+  </button>
+</div>
+
+<!-- LIVE MARKET STATUS TICKER -->
+<div class="market-status-bar">
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">🇺🇸 S&amp;P 500</span>
+    <span class="mkt-status-index">7,126</span>
+    <span class="mkt-status-time status-pre" id="us-status">Pre-Market</span>
+  </div>
+  <div class="mkt-status-sep"></div>
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">🇺🇸 NASDAQ</span>
+    <span class="mkt-status-index">24,468</span>
+    <span class="mkt-status-time status-pre">Pre-Market</span>
+  </div>
+  <div class="mkt-status-sep"></div>
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">🇭🇰 HSI</span>
+    <span class="mkt-status-index" id="hk-index">26,210</span>
+    <span class="mkt-status-time status-closed" id="hk-status">Closed</span>
+  </div>
+  <div class="mkt-status-sep"></div>
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">🇸🇬 STI</span>
+    <span class="mkt-status-index" id="sg-index">4,997</span>
+    <span class="mkt-status-time status-closed" id="sg-status">Closed</span>
+  </div>
+  <div class="mkt-status-sep"></div>
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">🇲🇾 KLCI</span>
+    <span class="mkt-status-index" id="my-index">1,694</span>
+    <span class="mkt-status-time status-closed" id="my-status">Closed</span>
+  </div>
+  <div class="mkt-status-sep"></div>
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">WTI Crude</span>
+    <span class="mkt-status-index down">$83.85</span>
+    <span class="mkt-status-time down">▼ -12.0%</span>
+  </div>
+  <div class="mkt-status-sep"></div>
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">USD/HKD</span>
+    <span class="mkt-status-index">7.78</span>
+    <span class="mkt-status-time neutral">Peg stable</span>
+  </div>
+  <div class="mkt-status-sep"></div>
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">USD/SGD</span>
+    <span class="mkt-status-index">1.330</span>
+    <span class="mkt-status-time neutral">MAS float</span>
+  </div>
+  <div class="mkt-status-sep"></div>
+  <div class="mkt-status-item">
+    <span class="mkt-status-name">USD/MYR</span>
+    <span class="mkt-status-index">4.450</span>
+    <span class="mkt-status-time neutral">BNM managed</span>
+  </div>
+</div>
+
+<!-- ARCHIVE BAR -->
+<div class="archive-bar" id="archive-bar">
+  <span class="archive-bar-label">Archive:</span>
+  <button class="archive-date-btn active market-us" onclick="showBriefing('us-2026-04-21', this)">🇺🇸 Tue Apr 21</button>
+  <button class="archive-date-btn market-hk" onclick="showBriefing('hk-2026-04-21', this)">🇭🇰 Tue Apr 21</button>
+  <button class="archive-date-btn market-sg" onclick="showBriefing('sg-2026-04-21', this)">🇸🇬 Tue Apr 21</button>
+  <button class="archive-date-btn market-my" onclick="showBriefing('my-2026-04-21', this)">🇲🇾 Tue Apr 21</button>
+</div>
+
+<div class="wrapper">
+
+  <!-- ════════════════════════════════ US PANEL ════════════════════════════════ -->
+  <div class="market-panel visible" id="panel-us">
+
+    <div class="briefing" id="briefing-us-2026-04-21">
+      <div class="briefing-header us-header">
+        <div class="briefing-date">🇺🇸 Tuesday, April 21, 2026</div>
+        <span class="briefing-badge badge-us">US Pre-Market</span>
+        <span class="briefing-subtitle">Sources: Reuters · CNBC · Schwab · Yahoo Finance · MarketBeat · RTX IR · GE IR</span>
+      </div>
+
+      <!-- 1. MACRO OVERVIEW -->
+      <div class="section" id="macro">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🌐</span>
+          <span class="section-title">Macro Overview</span>
+          <span class="section-tag">Global Risk Tone</span>
+          <span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="macro-grid">
+            <div class="macro-card"><div class="macro-card-label">S&amp;P 500</div><div class="macro-card-value up">7,126</div><div class="macro-card-change up">▲ +1.20% Friday close</div></div>
+            <div class="macro-card"><div class="macro-card-label">Dow Jones</div><div class="macro-card-value up">49,447</div><div class="macro-card-change up">▲ +1.79% Friday close</div></div>
+            <div class="macro-card"><div class="macro-card-label">Nasdaq</div><div class="macro-card-value up">24,468</div><div class="macro-card-change up">▲ +1.52% Friday close</div></div>
+            <div class="macro-card"><div class="macro-card-label">WTI Crude</div><div class="macro-card-value down">$83.85</div><div class="macro-card-change down">▼ -12.0% Hormuz reopening</div></div>
+            <div class="macro-card"><div class="macro-card-label">Brent Crude</div><div class="macro-card-value down">$90.38</div><div class="macro-card-change down">▼ -9.0% Supply shock unwind</div></div>
+            <div class="macro-card"><div class="macro-card-label">Risk Tone</div><div class="macro-card-value neutral" style="font-size:15px;">Cautiously Bullish</div><div class="macro-card-change neutral">⚠ Binary Geopolitical Catalyst</div></div>
+          </div>
+          <span class="risk-badge risk-caution">⚠ CAUTIOUSLY BULLISH — BINARY GEOPOLITICAL CATALYST TODAY</span>
+          <div class="macro-body">
+            <div class="warning">🚨 <strong>CRITICAL:</strong> Iran's ceasefire — Strait of Hormuz reopened — <strong>expires today, April 21</strong>. Peace deal said to be "very close." If diplomacy holds → rally continues. If ceasefire breaks → energy-driven stagflation repricing.</div>
+            <p>Equities enter Tuesday on the back of a strong 3-day rally, with S&P 500 and Nasdaq at record highs, driven by the ceasefire and Hormuz reopening. Oil plunged: <strong>WTI -12% to $83.85, Brent -9% to $90.38</strong> — the most significant single-day oil move in recent memory.</p>
+            <div class="highlight">📅 <strong>March Retail Sales</strong> at 8:30 AM is the marquee macro print today — first consumer read post-tariff spike. A miss raises stagflation fears heading into FOMC next week.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. ECONOMIC CALENDAR -->
+      <div class="section" id="calendar">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📅</span><span class="section-title">Economic Calendar</span>
+          <span class="section-tag">Today's Data</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <table class="cal-table">
+            <thead><tr><th>Time ET</th><th>Event</th><th>Prior</th><th>Consensus</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td class="cal-time imp-high">8:30 AM</td><td><div class="cal-event">🔴 March Retail Sales</div><div class="cal-note">HIGH IMPACT — Marquee data point</div></td><td class="est-value">+0.2%</td><td class="est-value">Watch closely</td><td class="cal-note">First consumer read post-tariff spike</td></tr>
+              <tr><td class="cal-time imp-med">8:00 AM</td><td><div class="cal-event">🟡 UNH Conference Call</div></td><td class="est-value">—</td><td class="est-value">—</td><td class="cal-note">Medicare Advantage MLR key metric</td></tr>
+              <tr><td class="cal-time imp-med">8:30 AM</td><td><div class="cal-event">🟡 RTX Conference Call</div></td><td class="est-value">—</td><td class="est-value">—</td><td class="cal-note">Backlog commentary + Iran defense orders</td></tr>
+              <tr><td class="cal-time imp-med">10:00 AM</td><td><div class="cal-event">🟡 Pending Home Sales (March)</div></td><td class="est-value">—</td><td class="est-value">—</td><td class="cal-note">Leading housing indicator</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. EARNINGS -->
+      <div class="section" id="earnings">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📊</span><span class="section-title">Earnings Reports</span>
+          <span class="section-tag">8 BMO · 2 AMC</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="earnings-section">
+            <div class="earnings-section-title">🔔 Pre-Market (Before Open)</div>
+            <table class="earnings-table">
+              <thead><tr><th>Ticker</th><th>Company</th><th>EPS Est.</th><th>Rev Est.</th><th>Key Context</th></tr></thead>
+              <tbody>
+                <tr><td><span class="ticker">GE</span></td><td class="company-name">GE Aerospace</td><td class="est-value">$1.59–1.63</td><td class="est-value">~$10.64B</td><td class="earnings-note">+18% rev growth expected · $190B backlog · Stock -5% pre-earnings</td></tr>
+                <tr><td><span class="ticker">UNH</span></td><td class="company-name">UnitedHealth Group</td><td class="est-value">$6.67–6.76</td><td class="est-value">~$109.7B</td><td class="earnings-note">EPS -10% YoY · MA pressure · Sector read-through for HUM, CVS, CI</td></tr>
+                <tr><td><span class="ticker">RTX</span></td><td class="company-name">RTX (Raytheon)</td><td class="est-value">$1.51</td><td class="est-value">~$21.55B</td><td class="earnings-note">4 consecutive EPS beats · $268B backlog · Iran war catalyst</td></tr>
+                <tr><td><span class="ticker">DHR</span></td><td class="company-name">Danaher</td><td class="est-value">$1.94</td><td class="est-value">—</td><td class="earnings-note">+3.2% EPS growth · Life sciences recovery</td></tr>
+                <tr><td><span class="ticker">MMM</span></td><td class="company-name">3M Company</td><td class="est-value">$1.98</td><td class="est-value">—</td><td class="earnings-note">Industrial bellwether · Cost restructuring progress</td></tr>
+                <tr><td><span class="ticker">NOC</span></td><td class="company-name">Northrop Grumman</td><td class="est-value">—</td><td class="est-value">—</td><td class="earnings-note">Defense name · Backlog and Iran demand commentary</td></tr>
+                <tr><td><span class="ticker">DHI</span></td><td class="company-name">D.R. Horton</td><td class="est-value">—</td><td class="est-value">—</td><td class="earnings-note">Housing demand · Mortgage rate sensitivity</td></tr>
+                <tr><td><span class="ticker">ISRG</span></td><td class="company-name">Intuitive Surgical</td><td class="est-value">—</td><td class="est-value">—</td><td class="earnings-note">Robotic surgery volumes · Healthcare spend</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="earnings-section">
+            <div class="earnings-section-title">🔕 After Market Close</div>
+            <table class="earnings-table">
+              <thead><tr><th>Ticker</th><th>Company</th><th>EPS Est.</th><th>Rev Est.</th><th>Key Context</th></tr></thead>
+              <tbody>
+                <tr><td><span class="ticker">UAL</span></td><td class="company-name">United Airlines</td><td class="est-value">$1.08</td><td class="est-value">—</td><td class="earnings-note">Stock -20% from high · Oil collapse = fuel tailwind · Watch summer bookings guidance</td></tr>
+                <tr><td><span class="ticker">COF</span></td><td class="company-name">Capital One</td><td class="est-value">$4.50</td><td class="est-value">—</td><td class="earnings-note">Credit quality · Consumer lending trends · Delinquency commentary</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. STOCKS IN PLAY -->
+      <div class="section" id="stocks">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🔥</span><span class="section-title">Stocks in Play</span>
+          <span class="section-tag">Primary Movers with Catalysts</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="stock-card binary">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">RTX</div><div class="stock-name">RTX Corporation (Raytheon)</div></div><span class="stock-catalyst-tag">Earnings + Defense Demand</span><span class="stock-bias-tag bias-binary">⚡ BINARY</span></div>
+            <div class="stock-body">Beat EPS 4 consecutive quarters (~12% avg surprise). Consensus $1.51 EPS / $21.55B revenue is a beatable bar. Iran conflict has driven massive defense order flow — $107B defense backlog, surging Tomahawk/SM-6 production. Ceasefire expiry today creates binary headline risk. Conf call at 8:30 AM ET.</div>
+          </div>
+          <div class="stock-card binary">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">GE</div><div class="stock-name">GE Aerospace</div></div><span class="stock-catalyst-tag">Earnings · Oversold Setup</span><span class="stock-bias-tag bias-binary">⚡ BINARY</span></div>
+            <div class="stock-body">Stock -5% pre-earnings despite 18% revenue growth consensus and $190B backlog. If GE delivers on CES growth and reaffirms FY26 EPS $7.10–7.40, the pullback reverses sharply. A guidance cut extends the slide. Webcast 7:30–8:20 AM ET.</div>
+          </div>
+          <div class="stock-card binary">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">UNH</div><div class="stock-name">UnitedHealth Group</div></div><span class="stock-catalyst-tag">Earnings · Sector Read</span><span class="stock-bias-tag bias-binary">⚡ BINARY</span></div>
+            <div class="stock-body">EPS projected -10% YoY but estimate revisions recently turned positive. Outperformance on medical cost ratios could fuel a large bounce. Miss amplifies MA cost headwind — read-through for <strong>HUM, CVS, CI</strong>. Watch MLR in the 8:00 AM conf call.</div>
+          </div>
+          <div class="stock-card bear">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">XLE / OIL</div><div class="stock-name">Energy Sector / Oil</div></div><span class="stock-catalyst-tag">Hormuz Reopening</span><span class="stock-bias-tag bias-binary">⚠ HIGH VOLATILITY</span></div>
+            <div class="stock-body">WTI -12%, Brent -9% — largest single-day oil move in recent memory. XOM, CVX, SLB face acute selling pressure. <strong>BUT</strong> ceasefire expires today — any breakdown sends oil right back up. Energy is a live geopolitical option today. Watch Trump / Tehran statements at open.</div>
+          </div>
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">UAL</div><div class="stock-name">United Airlines (AMC)</div></div><span class="stock-catalyst-tag">Earnings · Oil Tailwind</span><span class="stock-bias-tag bias-bull">↑ BULL SETUP</span></div>
+            <div class="stock-body">Stock -20% from high. Oil collapse = structural fuel cost tailwind. If management guides conservatively on fuel costs, earnings setup improves materially. Watch summer bookings and consumer travel demand. Risk/reward skews long given beaten-down entry.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. THEMES -->
+      <div class="section" id="themes">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🌊</span><span class="section-title">Broader Market Themes</span>
+          <span class="section-tag">4 Key Themes</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="theme-card"><span class="theme-number">1</span><span class="theme-title">Geopolitics as the Master Variable</span><div class="theme-body">Iran ceasefire expiration today = binary event. Extension sustains risk rally and suppressed oil. Breakdown = energy-driven stagflation repricing and significant unwind of recent gains.</div></div>
+          <div class="theme-card"><span class="theme-number">2</span><span class="theme-title">Earnings Season — Defense &amp; Healthcare Leading</span><div class="theme-body">RTX, NOC, GE Aerospace, UNH, MMM, DHR all report today — a macro snapshot of the US economy. <strong>Strong defense backlogs</strong> validate geopolitical spending. Healthcare cost normalization in UNH = positive sector signal.</div></div>
+          <div class="theme-card"><span class="theme-number">3</span><span class="theme-title">Consumer Data as the Swing Factor</span><div class="theme-body">March Retail Sales at 8:30 AM. First post-tariff read on consumer health. Beat → soft-landing narrative intact. Miss → stagflation fears amplify heading into FOMC next week.</div></div>
+          <div class="theme-card"><span class="theme-number">4</span><span class="theme-title">Tech Earnings on Deck — AI Capex Scrutiny</span><div class="theme-body">Tesla Wednesday; Meta, Microsoft later in week. AI capital expenditure guidance is the key watch. First clear view of whether Big Tech is investing through geopolitical uncertainty.</div></div>
+        </div>
+      </div>
+
+      <!-- 6. SECONDARY NAMES -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📰</span><span class="section-title">Secondary Names</span>
+          <span class="section-tag">Fresh News &amp; Read-Throughs</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="secondary-list">
+            <div class="secondary-item"><span class="secondary-ticker">HUM</span><span class="secondary-note">MA read-through from UNH earnings</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">CVS</span><span class="secondary-note">Managed care sector reaction to UNH MLR data</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">XOM</span><span class="secondary-note">Oil major under pressure from -12% WTI</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">CVX</span><span class="secondary-note">Analyst estimate revisions likely today on oil reset</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">BA</span><span class="secondary-note">GE Aerospace commentary may signal Boeing delivery schedules</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">DAL</span><span class="secondary-note">Oil collapse tailwind; UAL as sector read-through</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">AAL</span><span class="secondary-note">Highest leverage to fuel costs; most to gain from oil drop</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">TSLA</span><span class="secondary-note">Reports Wednesday; AI/autonomy narrative building</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">TOL</span><span class="secondary-note">D.R. Horton read-through for housing sector</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">SLB</span><span class="secondary-note">Oilfield services facing oil price reset headwind</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. WEEK AHEAD -->
+      <div class="section" id="week">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🗓️</span><span class="section-title">Week Ahead</span>
+          <span class="section-tag">Apr 21 – Apr 25</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <table class="week-table">
+            <thead><tr><th>Day</th><th>Earnings</th><th>Data &amp; Events</th></tr></thead>
+            <tbody>
+              <tr class="week-today-row">
+                <td class="week-day">📍 Tue Apr 21</td>
+                <td class="week-events"><span class="ticker">GE UNH RTX DHR MMM NOC DHI ISRG</span> (BMO) · <span class="ticker">UAL COF</span> (AMC)</td>
+                <td class="week-events">🔴 Retail Sales 8:30AM · Pending Home Sales 10AM · Iran ceasefire expires</td>
+              </tr>
+              <tr><td class="week-day">Wed Apr 22</td><td class="week-events"><span class="ticker">TSLA</span> (AMC)</td><td class="week-events">Fed speakers · Kevin Warsh Senate testimony</td></tr>
+              <tr><td class="week-day">Thu Apr 23</td><td class="week-events">Industrials / Financials</td><td class="week-events">Weekly Jobless Claims</td></tr>
+              <tr><td class="week-day">Fri Apr 24</td><td class="week-events">—</td><td class="week-events">Final April UMich Consumer Sentiment</td></tr>
+              <tr><td class="week-day" style="color:var(--purple)">Next Week</td><td class="week-events"><span class="ticker">META MSFT GOOGL AMZN</span> mega-cap</td><td class="week-events">FOMC Meeting begins · AI capex flood</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:12px;padding:10px 14px;background:#3a1a1a;border-radius:6px;border:1px solid #5a2d2d;font-size:12px;color:var(--red);">⚠ <strong>Biggest Risk:</strong> Iran ceasefire expires today — any escalation reprices energy, spikes VIX, unwinds recent gains.</div>
+        </div>
+      </div>
+
+      <!-- 8. WATCHLIST -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">💡</span><span class="section-title">Trader's Watchlist</span>
+          <span class="section-tag">Options · Levels · Flows</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="watchlist-grid">
+            <div class="watch-item"><span class="watch-bullet"></span><strong>RTX — Large Implied Move</strong><p>Earnings + geopolitical binary. Conf call at 8:30 AM ET (same as Retail Sales). Extreme volatility at open expected.</p></div>
+            <div class="watch-item"><span class="watch-bullet"></span><strong>GE — Asymmetric Gap Setup</strong><p>Stock -5% pre-earnings. Watch opening gap vs. Friday close. Beat = sharp reversal; miss = extension.</p></div>
+            <div class="watch-item"><span class="watch-bullet"></span><strong>XLE / USO — Geopolitical Proxy</strong><p>Energy ETFs are live options on ceasefire news. Move fast both ways. Watch Trump and Tehran statements.</p></div>
+            <div class="watch-item"><span class="watch-bullet"></span><strong>VIX — Monitor for Spike &gt;20</strong><p>Any ceasefire breakdown triggers risk-off rotation. Defensives and gold would benefit.</p></div>
+            <div class="watch-item"><span class="watch-bullet"></span><strong>Retail Sales 8:30 AM Surprise</strong><p>Above-consensus pushes futures higher. Miss amplifies stagflation narrative ahead of FOMC.</p></div>
+            <div class="watch-item"><span class="watch-bullet"></span><strong>UNH Sector Cascade</strong><p>MLR beat/miss cascades to HUM, CVS, CI. Even 50bps MLR improvement vs. estimates could move managed care 3–5%.</p></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end briefing -->
+
+  </div><!-- end US panel -->
+
+  <!-- ════════════════════════════════ HK PANEL ════════════════════════════════ -->
+  <div class="market-panel" id="panel-hk">
+
+    <!-- HK BRIEFING: April 21, 2026 -->
+    <div class="briefing" id="briefing-hk-2026-04-21">
+      <div class="briefing-header hk-header">
+        <div class="briefing-date">🇭🇰 Tuesday, April 21, 2026</div>
+        <span class="briefing-badge badge-hk">HK Pre-Market</span>
+        <span class="briefing-subtitle">Sources: Futunn · SCMP Business · HSI.com.hk · TradingEconomics · Nomura · HKEX</span>
+      </div>
+
+      <!-- 1. MACRO OVERVIEW -->
+      <div class="section" id="hk-macro">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🌐</span><span class="section-title">Macro Overview</span>
+          <span class="section-tag">HK / China Risk Tone</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="macro-grid">
+            <div class="macro-card"><div class="macro-card-label">HSI (Open)</div><div class="macro-card-value up">26,210</div><div class="macro-card-change">Range: 26,015 – 26,280</div></div>
+            <div class="macro-card"><div class="macro-card-label">HSI Recent High</div><div class="macro-card-value up">26,394</div><div class="macro-card-change up">Highest since Mar 2026</div></div>
+            <div class="macro-card"><div class="macro-card-label">USD / HKD</div><div class="macro-card-value neutral">7.78</div><div class="macro-card-change neutral">Peg stable (7.75–7.85)</div></div>
+            <div class="macro-card"><div class="macro-card-label">TSMC Q1 EPS</div><div class="macro-card-value up">Beat</div><div class="macro-card-change up">Q2 rev guide $39–40.2B</div></div>
+            <div class="macro-card"><div class="macro-card-label">China GDP '25</div><div class="macro-card-value up">+3.5%</div><div class="macro-card-change neutral">2026F: +2.5–3.5%</div></div>
+            <div class="macro-card"><div class="macro-card-label">Risk Tone</div><div class="macro-card-value up" style="font-size:15px;">Risk-On</div><div class="macro-card-change up">AI rally driving gains</div></div>
+          </div>
+          <span class="risk-badge risk-bullish">✅ RISK-ON — AI SUPPLY CHAIN RALLY LED BY TSMC BEAT</span>
+          <div class="macro-body">
+            <div class="highlight">💡 <strong>Key Driver:</strong> TSMC's blowout Q1 2026 earnings — AI demand described as "extremely robust," Q2 revenue guidance of $39–40.2B surpassing consensus, gross margin >65%. This has injected strong momentum into HK-listed AI supply chain stocks (chips, storage, optical comms).</div>
+            <p>The Hang Seng Index has broken above 26,000 and reached 26,394 — its highest level since March 2026 — as tech-led buying returns to HKEX. In recent sessions, <strong>Alibaba (9988) gained 5.6%</strong>, <strong>Xiaomi (1810) and Tencent (700) each gained ~4%</strong>, with broad strength in Hang Seng Tech names.</p>
+            <p>China macro remains two-speed: tech and industrial exports are strong, but <strong>property sector weakness persists</strong>. The PBoC kept loan prime rates unchanged, signalling confidence in the recovery trajectory without aggressive easing. Hong Kong's own economy is forecast to grow 2.5–3.5% in 2026 after a strong 3.5% expansion in 2025.</p>
+            <div class="macro-body">
+              <div class="highlight">🌏 <strong>US Geopolitical Read-Through:</strong> Iran ceasefire expiry today (US time) has limited direct impact on HK trading hours, but any energy shock headline could affect sentiment during the afternoon session. Watch oil prices for knock-on HK energy names (CNOOC, PetroChina).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. ECONOMIC CALENDAR -->
+      <div class="section" id="hk-calendar">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📅</span><span class="section-title">Economic &amp; Corporate Calendar</span>
+          <span class="section-tag">Today HKT</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <table class="cal-table">
+            <thead><tr><th>Time HKT</th><th>Event</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td class="cal-time imp-high">Pre-Market</td><td><div class="cal-event">🔴 TSMC Q1 2026 Earnings Read-Through</div></td><td class="cal-note">Already reported — AI demand "extremely robust." Ripples into HK chip, server, optical comms names.</td></tr>
+              <tr><td class="cal-time imp-med">All Day</td><td><div class="cal-event">🟡 US Iran Ceasefire Expiry</div></td><td class="cal-note">Afternoon HKT session watch — energy price volatility can move CNOOC, PetroChina, MISC.</td></tr>
+              <tr><td class="cal-time">Apr 29</td><td><div class="cal-event">📊 HKEX (388) Q1 2026 Results</div></td><td class="cal-note">Board meeting scheduled Apr 29 to approve Q1 results. Watch trading volumes and IPO pipeline.</td></tr>
+              <tr><td class="cal-time">Ongoing</td><td><div class="cal-event">📊 China Annual Results Season</div></td><td class="cal-note">Many HKEX-listed firms releasing FY2025 annual results. Check HKEXnews.hk for individual filings.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. EARNINGS -->
+      <div class="section" id="hk-earnings">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📊</span><span class="section-title">Key Announcements</span>
+          <span class="section-tag">HKEX Corporate Actions</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="earnings-section">
+            <div class="earnings-section-title">🔔 Active This Week</div>
+            <table class="earnings-table">
+              <thead><tr><th>Code</th><th>Company</th><th>Catalyst</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td><span class="ticker">9988</span></td><td class="company-name">Alibaba Group</td><td class="est-value">Recent +5.6%</td><td class="earnings-note">Strong AI cloud narrative; Qwen model traction; watch next earnings date</td></tr>
+                <tr><td><span class="ticker">700</span></td><td class="company-name">Tencent Holdings</td><td class="est-value">Recent +4%</td><td class="earnings-note">Gaming recovery + WeChat AI integration; key HSI weighting stock</td></tr>
+                <tr><td><span class="ticker">1810</span></td><td class="company-name">Xiaomi Corp</td><td class="est-value">Recent +4%</td><td class="earnings-note">EV + phone AI ecosystem; benefitting from TSMC AI tailwind</td></tr>
+                <tr><td><span class="ticker">388</span></td><td class="company-name">HKEX Ltd</td><td class="est-value">Apr 29 results</td><td class="earnings-note">Watch trading volumes, IPO pipeline, Stock Connect flows in Q1</td></tr>
+                <tr><td><span class="ticker">883</span></td><td class="company-name">CNOOC</td><td class="est-value">Oil -12%</td><td class="earnings-note">WTI plunge = acute headwind; Iran ceasefire catalyst; watch afternoon session</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. STOCKS IN PLAY -->
+      <div class="section" id="hk-stocks">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🔥</span><span class="section-title">Stocks in Play</span>
+          <span class="section-tag">Primary Movers with Catalysts</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">9988</div><div class="stock-name">Alibaba Group</div></div><span class="stock-catalyst-tag">AI Cloud + Qwen Momentum</span><span class="stock-bias-tag bias-bull">↑ BULL</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> TSMC AI tailwind + strong cloud demand narrative. Alibaba Cloud is a major AI infrastructure beneficiary in China. Recent session gained 5.6% on broad tech buying. <strong>Why it moves:</strong> TSMC's confirmation of "extremely robust" AI demand validates Alibaba Cloud capex and pricing power. Any China stimulus signal or regulatory easing adds fuel. Key watch: next quarterly results for cloud revenue acceleration.</div>
+          </div>
+
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">700</div><div class="stock-name">Tencent Holdings</div></div><span class="stock-catalyst-tag">AI Integration + Gaming Recovery</span><span class="stock-bias-tag bias-bull">↑ BULL</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> WeChat AI features gaining traction; gaming pipeline recovery post-regulatory normalisation. +4% in recent sessions. <strong>Why it moves:</strong> As the largest HSI constituent, Tencent moves the index. AI monetisation through advertising and cloud is the near-term story. Watch for any China regulatory headlines which can quickly reverse gains.</div>
+          </div>
+
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">1810</div><div class="stock-name">Xiaomi Corp</div></div><span class="stock-catalyst-tag">EV + AI Phone Ecosystem</span><span class="stock-bias-tag bias-bull">↑ BULL</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> Dual AI tailwind from TSMC chips + growing EV delivery momentum. +4% recent session. <strong>Why it moves:</strong> Xiaomi straddles two mega-trends: AI smartphones (major chip buyer from TSMC supply chain) and budget EVs competing with BYD. Both narratives are strengthening simultaneously. Watch monthly EV delivery data.</div>
+          </div>
+
+          <div class="stock-card bear">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">883 / 857</div><div class="stock-name">CNOOC / PetroChina</div></div><span class="stock-catalyst-tag">Oil -12% Hormuz Reopening</span><span class="stock-bias-tag bias-bear">↓ BEAR</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> WTI crude plunged ~12%, Brent -9% after Strait of Hormuz reopened. CNOOC and PetroChina are direct oil price proxies on HKEX. <strong>Why it moves:</strong> Revenue and earnings estimates get revised down immediately on oil price resets. However, the Iran ceasefire expires today (US time) — if it breaks down, oil reverses and these names recover sharply. High two-way volatility expected in afternoon HKT session as US market opens.</div>
+          </div>
+
+          <div class="stock-card binary">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">3690</div><div class="stock-name">Meituan</div></div><span class="stock-catalyst-tag">AI + Consumer Recovery</span><span class="stock-bias-tag bias-bull">↑ BULL SETUP</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> Recent +3% on broader tech buying; AI-driven delivery optimisation narrative. <strong>Why it moves:</strong> Meituan's core food delivery is benefiting from recovery in China domestic consumption. AI routing and drone delivery pilots are re-rating the stock. Regulatory clarity from Beijing on food delivery practices is a key tail risk — watch for any SAMR commentary.</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 5. THEMES -->
+      <div class="section" id="hk-themes">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🌊</span><span class="section-title">Broader Market Themes</span>
+          <span class="section-tag">4 Key Themes</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="theme-card"><span class="theme-number" style="background:var(--hk-color)">1</span><span class="theme-title">TSMC Earnings = HK AI Supply Chain Catalyst</span><div class="theme-body">TSMC's blowout Q1 2026 results — AI demand "extremely robust," Q2 revenue guidance beats, gross margin >65% — directly benefits HK-listed AI supply chain names: chip designers, server assemblers, storage, optical communication names. This is the dominant catalyst driving today's tech buying.</div></div>
+          <div class="theme-card"><span class="theme-number" style="background:var(--hk-color)">2</span><span class="theme-title">China Two-Speed Economy — Tech Strong, Property Weak</span><div class="theme-body">China's economy grew 3.5% in 2025 and is forecast 2.5–3.5% in 2026. However, the recovery is uneven: <strong>tech and exports are strong</strong> while property developers remain under stress. PBoC is holding rates steady. Watch for any targeted stimulus announcements that could re-rate the property sector (960 Longfor, 2007 Country Garden).</div></div>
+          <div class="theme-card"><span class="theme-number" style="background:var(--hk-color)">3</span><span class="theme-title">Oil Shock Reversal — Energy Names Under Pressure</span><div class="theme-body">The Iran-Hormuz reopening sent oil crashing. HK-listed energy majors (CNOOC 883, PetroChina 857, Sinopec 386) face immediate earnings estimate cuts. The ceasefire expiry today (US time) creates afternoon volatility risk. Airlines with HK listings benefit from lower jet fuel costs.</div></div>
+          <div class="theme-card"><span class="theme-number" style="background:var(--hk-color)">4</span><span class="theme-title">Stock Connect Flows — Southbound Buying Key Signal</span><div class="theme-body">Southbound Stock Connect inflows (mainland investors buying HK stocks) have been a major driver of recent HSI recovery. Watch daily Stock Connect data from HKEX — sustained southbound buying above HK$5B/day signals continued mainland confidence in HK tech valuations.</div></div>
+        </div>
+      </div>
+
+      <!-- 6. SECONDARY NAMES -->
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📰</span><span class="section-title">Secondary Names</span>
+          <span class="section-tag">Fresh News &amp; Read-Throughs</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="secondary-list">
+            <div class="secondary-item"><span class="secondary-ticker">1211 BYD</span><span class="secondary-note">EV sales momentum; AI feature integration in vehicles</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">1299 AIA</span><span class="secondary-note">Insurance; China market recovery driving new business value</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">5 HSBC</span><span class="secondary-note">Financials; watch NIM commentary and Asia revenue mix</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">386 Sinopec</span><span class="secondary-note">Oil -12% headwind; petrochemical margins partially offset</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">9618 JD.com</span><span class="secondary-note">E-commerce + AI logistics; China consumer recovery read</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">2318 Ping An</span><span class="secondary-note">Insurance + fintech; China property exposure watch</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">960 Longfor</span><span class="secondary-note">Property — any PBoC/stimulus signal = sharp bounce potential</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">6862 Haidilao</span><span class="secondary-note">Consumer recovery; China dining spend normalisation</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. WEEK AHEAD -->
+      <div class="section" id="hk-week">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🗓️</span><span class="section-title">Week Ahead — HK / China</span>
+          <span class="section-tag">Apr 21 – Apr 25</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <table class="week-table">
+            <thead><tr><th>Day</th><th>HK / China Events</th><th>Global Impact</th></tr></thead>
+            <tbody>
+              <tr class="week-today-row"><td class="week-day">📍 Tue Apr 21</td><td class="week-events">TSMC earnings read-through · CNOOC/PetroChina oil pressure · Iran ceasefire expiry watch (afternoon session)</td><td class="week-events">US Retail Sales 8:30 AM ET · US earnings: GE, UNH, RTX</td></tr>
+              <tr><td class="week-day">Wed Apr 22</td><td class="week-events">Stock Connect daily flow data · Any China NBS economic releases</td><td class="week-events">TSLA earnings AMC · Kevin Warsh Senate testimony</td></tr>
+              <tr><td class="week-day">Thu Apr 23</td><td class="week-events">China industrial data watch · Property sector policy watch</td><td class="week-events">US jobless claims</td></tr>
+              <tr><td class="week-day">Fri Apr 24</td><td class="week-events">End-of-week Stock Connect flow summary</td><td class="week-events">UMich Consumer Sentiment</td></tr>
+              <tr><td class="week-day">Apr 29</td><td class="week-events"><span class="ticker">388 HKEX</span> Q1 2026 results</td><td class="week-events">US mega-cap tech (META, MSFT, GOOGL) · FOMC begins</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 8. WATCHLIST -->
+      <div class="section" id="hk-watchlist">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">💡</span><span class="section-title">Trader's Watchlist</span>
+          <span class="section-tag">Levels · Flows · Options</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="watchlist-grid">
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--hk-color)"></span><strong>HSI 26,400 — Key Resistance</strong><p>Recent intraday high of 26,394 is the level to watch. A clean break and close above 26,400 opens the door to 27,000 — highest since early 2024.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--hk-color)"></span><strong>Southbound Stock Connect Daily Flow</strong><p>Mainland investors buying HK stocks is the fuel behind this rally. Watch HKEX daily data — flows above HK$5B/day = bullish signal; reversal = warning.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--hk-color)"></span><strong>CNOOC (883) — Oil Binary</strong><p>Direct proxy for WTI price. Ceasefire expiry today creates afternoon volatility. If oil reverses up, CNOOC/PetroChina recover sharply; if oil holds low, further downside.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--hk-color)"></span><strong>HSTECH vs. HSI Spread</strong><p>HSTECH outperforming HSI signals AI/tech leadership. Watch the spread — TSMC earnings should widen it today in favour of tech names.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--hk-color)"></span><strong>USD/HKD Peg Status</strong><p>Monitor for any peg stress (trading near 7.85 weak end would trigger HKMA intervention). Currently stable at ~7.78. A strengthening HKD (toward 7.75) signals capital inflows.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--hk-color)"></span><strong>Property Sector — Stimulus Optionality</strong><p>Longfor (960), Country Garden (2007) have massive rebound potential on any Beijing property support signal. Low-probability but high-impact: watch NPC or PBoC headlines.</p></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end HK briefing -->
+  </div><!-- end HK panel -->
+
+  <!-- ════════════════════════════════ SG PANEL ════════════════════════════════ -->
+  <div class="market-panel" id="panel-sg">
+    <!-- SG BRIEFING: April 21, 2026 -->
+    <div class="briefing" id="briefing-sg-2026-04-21">
+      <div class="briefing-header sg-header">
+        <div class="briefing-date">🇸🇬 Tuesday, April 21, 2026</div>
+        <span class="briefing-badge badge-sg">SGX Pre-Market</span>
+        <span class="briefing-subtitle">Sources: Growbeansprout · TheFinance.sg · DBS Research · SGX · Bernama · OCBC IR</span>
+      </div>
+
+      <div class="section" id="sg-macro">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🌐</span><span class="section-title">Macro Overview</span>
+          <span class="section-tag">SG / ASEAN Risk Tone</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="macro-grid">
+            <div class="macro-card"><div class="macro-card-label">STI (Last Close)</div><div class="macro-card-value neutral">~4,997</div><div class="macro-card-change">Range recent: 4,975–5,036</div></div>
+            <div class="macro-card"><div class="macro-card-label">STI 2026F EPS Growth</div><div class="macro-card-value up">+8.8%</div><div class="macro-card-change up">Banks turning from drag to driver</div></div>
+            <div class="macro-card"><div class="macro-card-label">USD / SGD</div><div class="macro-card-value neutral">~1.33</div><div class="macro-card-change neutral">MAS managed float</div></div>
+            <div class="macro-card"><div class="macro-card-label">WTI Crude</div><div class="macro-card-value down">$83.85</div><div class="macro-card-change down">▼ -12% Hormuz reopening</div></div>
+            <div class="macro-card"><div class="macro-card-label">OCBC ATH</div><div class="macro-card-value up">S$22.83</div><div class="macro-card-change up">Record high Apr 2; XD Apr 23</div></div>
+            <div class="macro-card"><div class="macro-card-label">Risk Tone</div><div class="macro-card-value up" style="font-size:14px;">Cautiously Bullish</div><div class="macro-card-change neutral">Dividend season + oil tailwind</div></div>
+          </div>
+          <span class="risk-badge risk-bullish">✅ CAUTIOUSLY BULLISH — DIVIDEND SEASON + OIL PRICE TAILWIND</span>
+          <div class="macro-body">
+            <div class="highlight">💡 <strong>Key Theme:</strong> OCBC goes ex-dividend on <strong>April 23</strong> (S$0.58/share cash dividend). Dividend positioning is supporting STI bank stocks this week. Combined with oil crash reducing inflation pressure, Singapore banks are "well positioned to absorb oil shock."</div>
+            <p>The STI has been trading in a tight 4,975–5,036 band. <strong>OCBC hit an all-time high of S$22.83</strong> on April 2, pushing its market cap above S$100B for the first time. STI earnings growth is set to accelerate to 8.8% in 2026, driven by banks turning from an earnings drag (FY25) to +5.4% YoY growth (FY26).</p>
+            <p>Oil's -12% crash is a net positive for Singapore — as an energy importer and trading hub, lower energy costs ease inflation and improve airline/logistics margins. <strong>SIA (C6L)</strong> is a direct beneficiary. The Iran ceasefire expiry today (US time) could inject volatility into afternoon SGT trading if oil reverses.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="sg-calendar">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📅</span><span class="section-title">Economic &amp; Corporate Calendar</span>
+          <span class="section-tag">Today &amp; This Week SGT</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <table class="cal-table">
+            <thead><tr><th>Date</th><th>Event</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td class="cal-time imp-high">Apr 23</td><td><div class="cal-event">🔴 OCBC (O39) Ex-Dividend Date</div></td><td class="cal-note">S$0.58 cash dividend. Stock typically dips on XD day — watch for institutional pre-positioning today and Wed.</td></tr>
+              <tr><td class="cal-time imp-med">This Week</td><td><div class="cal-event">🟡 US Earnings Season Read-Through</div></td><td class="cal-note">US bank (COF), industrial (GE, RTX), and airline (UAL) results affect SG sector read — DBS/OCBC/UOB, SIA, STEngg.</td></tr>
+              <tr><td class="cal-time imp-med">Ongoing</td><td><div class="cal-event">🟡 Singapore Q1 2026 Corporate Results Season</div></td><td class="cal-note">DBS, OCBC, UOB expected to report Q1 in early May. Watch for pre-results analyst estimate revisions.</td></tr>
+              <tr><td class="cal-time">Afternoon</td><td><div class="cal-event">Iran Ceasefire Expiry Watch</div></td><td class="cal-note">If oil price reverses upward, SIA benefits reverse; energy names recover. Monitor during SG afternoon session.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="sg-earnings">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🔥</span><span class="section-title">Stocks in Play</span>
+          <span class="section-tag">Primary Movers with Catalysts</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">O39</div><div class="stock-name">OCBC Bank</div></div><span class="stock-catalyst-tag">Record High + Dividend XD Apr 23</span><span class="stock-bias-tag bias-bull">↑ BULL</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> All-time high of S$22.83 hit April 2 · S$0.58 dividend going ex April 23. <strong>Why it moves:</strong> Institutional and retail investors positioning ahead of the ex-dividend date creates near-term buying support. OCBC's 4.3% yield remains attractive despite the ATH. However, the stock typically dips on XD day itself — watch for sell-the-news on April 23. Key metric: NIM (Net Interest Margin) outlook with US rate cuts on the horizon.</div>
+          </div>
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">C6L</div><div class="stock-name">Singapore Airlines</div></div><span class="stock-catalyst-tag">Oil -12% = Fuel Cost Windfall</span><span class="stock-bias-tag bias-bull">↑ BULL</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> WTI crude -12%, Brent -9% — jet fuel is ~25-30% of SIA's operating costs. <strong>Why it moves:</strong> Every 10% drop in oil translates to hundreds of millions in fuel savings annually. If the Hormuz ceasefire holds and oil stays suppressed, SIA's FY27 earnings estimates get upgraded. Watch US UAL results tonight for demand read-through — if consumer travel is strong, SIA benefits doubly.</div>
+          </div>
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">Z74</div><div class="stock-name">SingTel</div></div><span class="stock-catalyst-tag">10.5% Upside to Consensus + Buyback</span><span class="stock-bias-tag bias-bull">↑ BULL SETUP</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> Consensus target S$5.313 vs. current ~S$4.81 = 10.5% upside. Active S$2B share buyback programme ongoing. Interim dividend up to 8.2 cents (from 7.0 cents). <strong>Why it moves:</strong> Buyback floor provides downside support. Regional data growth (Optus Australia, Airtel India indirect stake) and enterprise 5G monetisation are the re-rating catalysts. Low-beta defensive name in volatile tape.</div>
+          </div>
+          <div class="stock-card binary">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">D05 / U11</div><div class="stock-name">DBS / UOB</div></div><span class="stock-catalyst-tag">Banks: Oil Resilience + Dividend Appeal</span><span class="stock-bias-tag bias-bull">↑ BULL</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> Singapore banks described as "well positioned to absorb oil shock." DBS yields 5.8% forward — highest of the three. <strong>Why it moves:</strong> As the US curve evolves post-FOMC (next week), NIM compression risk is priced in. Oil's drop reduces bad debt risk in energy loan books. DBS and UOB trade at higher P/B than OCBC; dividend yield hunt drives flows. Watch US Capital One (COF) results tonight for credit quality read-through to Singapore banks.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="sg-stocks">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🌊</span><span class="section-title">Broader Market Themes</span>
+          <span class="section-tag">3 Key Themes</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="theme-card"><span class="theme-number" style="background:var(--sg-color);color:#000">1</span><span class="theme-title">Dividend Season Driving STI Support</span><div class="theme-body">OCBC's April 23 ex-dividend date is the near-term anchor for STI. Dividend seasonality typically lifts bank stocks in the weeks before XD, then creates a sell-off on the day. <strong>STI earnings growth of 8.8% in 2026</strong>, led by banks, supports the index at current levels. Watch for DBS and UOB to announce their own dividend timelines.</div></div>
+          <div class="theme-card"><span class="theme-number" style="background:var(--sg-color);color:#000">2</span><span class="theme-title">Oil Crash — Net Positive for Singapore</span><div class="theme-body">Unlike Malaysia (oil exporter), Singapore is a net energy importer and refining/trading hub. A sustained oil price drop lowers import costs, eases inflation, and benefits airlines (SIA), logistics (SATS, ComfortDelGro), and consumer spending. The key risk is if oil reverses upward on ceasefire breakdown today.</div></div>
+          <div class="theme-card"><span class="theme-number" style="background:var(--sg-color);color:#000">3</span><span class="theme-title">REIT Sector — Rate Sensitivity Watch</span><div class="theme-body">Singapore REITs (CapLand Integrated Commercial, Mapletree Pan Asia, Ascendas) are highly sensitive to US rate expectations. With FOMC meeting next week, any dovish signal = REIT rally. Oil crash reduces inflation → increases probability of Fed rate cuts → positive for REIT valuations. Watch the iEdge S-REIT Index as a lead indicator.</div></div>
+        </div>
+      </div>
+
+      <div class="section" id="sg-themes">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📰</span><span class="section-title">Secondary Names</span>
+          <span class="section-tag">Fresh News &amp; Read-Throughs</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="secondary-list">
+            <div class="secondary-item"><span class="secondary-ticker">C52 ComfortDelGro</span><span class="secondary-note">Lower fuel costs = margin improvement for taxi/bus operations</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">S58 SATS</span><span class="secondary-note">Aviation food & cargo; SIA demand read-through</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">9CI CapLand</span><span class="secondary-note">Property + REIT; watch Fed rate signal for re-rating</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">BN4 Keppel</span><span class="secondary-note">Infrastructure + data centres; AI demand tailwind for DC segment</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">V03 Venture</span><span class="secondary-note">Electronics MFG; US tech earnings read-through</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">BSL Raffles Medical</span><span class="secondary-note">Healthcare; China revenue recovery from medical tourism</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="sg-week">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🗓️</span><span class="section-title">Week Ahead — Singapore</span>
+          <span class="section-tag">Apr 21 – Apr 25</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <table class="week-table">
+            <thead><tr><th>Day</th><th>SGX Events</th><th>Global Impact on SG</th></tr></thead>
+            <tbody>
+              <tr class="week-today-row"><td class="week-day">📍 Tue Apr 21</td><td class="week-events">Watch OCBC pre-XD positioning · SIA oil tailwind · Afternoon Iran ceasefire watch</td><td class="week-events">US Retail Sales 8:30 ET · GE, UNH, RTX earnings · UAL, COF after close</td></tr>
+              <tr><td class="week-day">Wed Apr 22</td><td class="week-events">STI stabilisation watch · REIT sector monitor</td><td class="week-events">TSLA earnings · Kevin Warsh Senate testimony · Fed rate outlook</td></tr>
+              <tr><td class="week-day">Thu Apr 23</td><td class="week-events"><strong>OCBC (O39) Ex-Dividend Day</strong> — S$0.58/share · Expect dip on XD</td><td class="week-events">US jobless claims</td></tr>
+              <tr><td class="week-day">Fri Apr 24</td><td class="week-events">End-of-week bank positioning · REIT flow watch</td><td class="week-events">UMich Consumer Sentiment</td></tr>
+              <tr><td class="week-day" style="color:var(--purple)">Next Week</td><td class="week-events">SG Q1 GDP flash estimate (watch for MAS date) · DBS/UOB/OCBC Q1 prep</td><td class="week-events">FOMC · META, MSFT, GOOGL, AMZN earnings</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="sg-watchlist">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">💡</span><span class="section-title">Trader's Watchlist</span>
+          <span class="section-tag">Levels · Dividend · REIT</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="watchlist-grid">
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--sg-color)"></span><strong>OCBC XD Trade — Apr 23</strong><p>Last chance to buy before XD is April 22. Stock typically rallies pre-XD, dips on XD day. Watch whether the S$22.83 ATH holds as support post-dividend.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--sg-color)"></span><strong>STI 5,000 Level</strong><p>Psychological support at 5,000. A sustained break below opens 4,900; a hold and push above 5,036 targets a fresh 2026 high. Watch bank stocks as primary driver.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--sg-color)"></span><strong>SIA — Oil as Fuel Cost Proxy</strong><p>WTI at $83.85 is a multi-month low. Every sustained $10/bbl drop = meaningful margin expansion for SIA. Watch for analyst estimate upgrades if oil holds low.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--sg-color)"></span><strong>iEdge S-REIT Index</strong><p>FOMC next week = binary for REITs. Dovish = rally; hawkish = sell-off. Position sizing in REIT ETFs (CLR) ahead of FOMC is key risk management decision this week.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--sg-color)"></span><strong>COF Results Tonight → DBS/OCBC Read</strong><p>Capital One's credit quality commentary and delinquency data is the closest proxy for Singapore bank consumer loan books. A COF beat = positive signal for SG banks tomorrow.</p></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end SG briefing -->
+
+    <div class="empty-state" style="display:none">
+      <div class="empty-state-icon">🇸🇬</div>
+      <div class="empty-state-title">Singapore Market Rundown</div>
+      <div class="empty-state-desc">No briefings yet for the Singapore (SGX) market. Run the on-demand task from the Scheduled section to generate today's STI briefing.</div>
+      <div class="market-info-grid">
+        <div class="market-info-card sg">
+          <h4>🏛️ Exchange</h4>
+          <p>Singapore Exchange (SGX)<br>Mainboard · Catalist · Derivatives</p>
+        </div>
+        <div class="market-info-card sg">
+          <h4>🕐 Trading Hours</h4>
+          <p>Morning: 9:00–12:30 SGT<br>Afternoon: 14:00–17:00 SGT<br>Pre-open: 8:30–9:00 SGT</p>
+        </div>
+        <div class="market-info-card sg">
+          <h4>📊 Key Indices</h4>
+          <p>Straits Times Index (STI)<br>MSCI Singapore · SGX REIT Index<br>iEdge S-REIT Index</p>
+        </div>
+        <div class="market-info-card sg">
+          <h4>💱 Currency</h4>
+          <p>Singapore Dollar (SGD)<br>MAS-managed float band<br>USD/SGD: ~1.33</p>
+        </div>
+        <div class="market-info-card sg">
+          <h4>📰 Key Sources</h4>
+          <p>SGX.com · Business Times SG<br>CNA Business · The Straits Times<br>MAS.gov.sg</p>
+        </div>
+        <div class="market-info-card sg">
+          <h4>🔥 Stocks to Watch</h4>
+          <p>DBS (D05) · OCBC (O39) · UOB (U11)<br>SingTel (Z74) · CapLand (9CI)<br>Keppel (BN4) · Mapletree REITs</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ MY PANEL ════════════════════════════════ -->
+  <div class="market-panel" id="panel-my">
+    <!-- MY BRIEFING: April 21, 2026 -->
+    <div class="briefing" id="briefing-my-2026-04-21">
+      <div class="briefing-header my-header">
+        <div class="briefing-date">🇲🇾 Tuesday, April 21, 2026</div>
+        <span class="briefing-badge badge-my">Bursa Pre-Market</span>
+        <span class="briefing-subtitle">Sources: Bernama · Palm Oil Magazine · Malay Mail · BusinessToday.my · Minichart.com.sg · Bursa Malaysia</span>
+      </div>
+
+      <div class="section" id="my-macro">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🌐</span><span class="section-title">Macro Overview</span>
+          <span class="section-tag">MY / ASEAN Risk Tone</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="macro-grid">
+            <div class="macro-card"><div class="macro-card-label">KLCI (Last Close)</div><div class="macro-card-value neutral">~1,694</div><div class="macro-card-change">+6.13 pts Apr 16 open</div></div>
+            <div class="macro-card"><div class="macro-card-label">Financial Services</div><div class="macro-card-value up">19,822</div><div class="macro-card-change up">▲ +149 pts recent</div></div>
+            <div class="macro-card"><div class="macro-card-label">Plantation Index</div><div class="macro-card-value down">8,905</div><div class="macro-card-change down">▼ -35 pts recent</div></div>
+            <div class="macro-card"><div class="macro-card-label">CPO Jul Futures</div><div class="macro-card-value down">RM 4,450</div><div class="macro-card-change down">▼ -1.0% · weak exports</div></div>
+            <div class="macro-card"><div class="macro-card-label">WTI Crude</div><div class="macro-card-value down">$83.85</div><div class="macro-card-change down">▼ -12% · Hormuz reopening</div></div>
+            <div class="macro-card"><div class="macro-card-label">Risk Tone</div><div class="macro-card-value down" style="font-size:14px;">Cautious / Mixed</div><div class="macro-card-change down">Oil & CPO headwinds</div></div>
+          </div>
+          <span class="risk-badge risk-caution">⚠ MIXED — ENERGY & PLANTATION HEADWINDS VS FINANCIAL STRENGTH</span>
+          <div class="macro-body">
+            <div class="warning">⚠ <strong>Dual Commodity Headwind:</strong> WTI crude -12% (Petronas-linked names under pressure) AND CPO exports down 34–35% (Apr 1–15 vs. prior period) with India imports falling 19% MoM. Malaysia is a commodity-driven market — today's session faces meaningful selling in both energy and plantation sectors.</div>
+            <p>The KLCI opened higher last week on hopes of easing West Asia tensions, and the ceasefire has indeed materialised. However, the <strong>oil price crash is a direct negative for Malaysia</strong> as a net oil exporter — Petronas-linked stocks (Petronas Chemicals, MISC, Dialog) face acute earnings estimate cuts.</p>
+            <p>On the positive side, the <strong>Financial Services Index has been surging</strong> (+149 pts recently) with Maybank, CIMB, and Public Bank all in positive territory. Banks are benefitting from stable BNM OPR and improving credit quality as geopolitical risk eases.</p>
+            <div class="highlight">🌏 <strong>CPO-Oil Dynamic:</strong> CPO prices are correlated to crude oil because palm oil competes as a biodiesel feedstock. With Brent now at $90/bbl (down from ~$100), CPO's biofuel premium narrows, adding to export weakness. CPO is at RM4,450/ton — watch the RM4,400 support level.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="my-calendar">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📅</span><span class="section-title">Economic &amp; Corporate Calendar</span>
+          <span class="section-tag">Today &amp; This Week MYT</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <table class="cal-table">
+            <thead><tr><th>Date</th><th>Event</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td class="cal-time imp-high">Today</td><td><div class="cal-event">🔴 Oil Price Shock — Petronas Linked Stocks</div></td><td class="cal-note">WTI -12%. Petronas Chemicals (5183), MISC (3816), Dialog (7277) face immediate downside pressure at open.</td></tr>
+              <tr><td class="cal-time imp-high">Today</td><td><div class="cal-event">🔴 CPO at RM4,450 — Plantation Sector Watch</div></td><td class="cal-note">CPO down on weak exports and reduced biodiesel premium. Sime Darby Plantation (5285), IOI Corp (1961), KL Kepong (2445) all in focus.</td></tr>
+              <tr><td class="cal-time imp-med">Today</td><td><div class="cal-event">🟡 KLCI Expansion Study — Kenanga Report</div></td><td class="cal-note">Kenanga noted FBM KLCI expansion could improve market diversity. Watch for structural reform discussion impact on index composition stocks.</td></tr>
+              <tr><td class="cal-time">Ongoing</td><td><div class="cal-event">CPO Export Data — April 1–15</div></td><td class="cal-note">Cargo survey showed exports -34–35% vs prior period. India imports down 19% MoM — biggest demand risk for Malaysian CPO.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section" id="my-earnings">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🔥</span><span class="section-title">Stocks in Play</span>
+          <span class="section-tag">Primary Movers with Catalysts</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="stock-card bear">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">5183</div><div class="stock-name">Petronas Chemicals</div></div><span class="stock-catalyst-tag">Oil -12% Direct Hit</span><span class="stock-bias-tag bias-bear">↓ BEAR</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> WTI crude -12% — Petronas Chemicals fell 14 sen to RM5.76 in last session (top loser). <strong>Why it moves:</strong> As a Petronas-linked petrochemical company, its feedstock costs and product pricing are directly tied to oil. A 12% oil crash is severe — expect further analyst EPS estimate cuts today. The ceasefire expiry risk (oil could bounce) is the only near-term positive catalyst. Watch Brent crude closely during the afternoon MY session.</div>
+          </div>
+          <div class="stock-card bear">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">5285</div><div class="stock-name">Sime Darby Plantation</div></div><span class="stock-catalyst-tag">CPO RM4,450 + Export Slump</span><span class="stock-bias-tag bias-bear">↓ BEAR</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> CPO futures at RM4,450/ton, down ~RM80-100 in recent sessions. Apr 1–15 exports down 34–35%. India demand down 19% MoM. <strong>Why it moves:</strong> Sime Darby Plantation is the largest palm oil producer on Bursa — every RM100/ton CPO move translates directly to earnings. With oil crash narrowing the biofuel premium and India reducing purchases, both demand and price vectors are negative today. Key support: RM4,400 CPO floor.</div>
+          </div>
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">1155</div><div class="stock-name">Maybank</div></div><span class="stock-catalyst-tag">Financial Services Surge</span><span class="stock-bias-tag bias-bull">↑ BULL</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> Financial Services Index surged +149 pts recently. Maybank gained 12 sen to RM11.16 in last session. <strong>Why it moves:</strong> Banks are the bright spot in today's mixed Bursa tape. BNM's stable OPR supports NIMs. Easing West Asia tension reduces geopolitical risk premium in loan books. Maybank's ASEAN diversification (Indonesia, Philippines exposure) provides growth optionality. Dividend yield remains attractive to domestic institutions (EPF, Tabung Haji).</div>
+          </div>
+          <div class="stock-card bull">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">1023 / 1295</div><div class="stock-name">CIMB / Public Bank</div></div><span class="stock-catalyst-tag">Banking Sector Momentum</span><span class="stock-bias-tag bias-bull">↑ BULL</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> CIMB +5 sen to RM7.60, Public Bank +2 sen to RM4.66 in recent session. <strong>Why it moves:</strong> Same financial sector tailwinds as Maybank — stable BNM rates, easing geopolitical risk, improving credit quality. CIMB's regional exposure (Thailand, Indonesia) adds growth. Public Bank has consistently strong asset quality. Watch for any BNM OPR commentary — any hint of easing would be bearish for NIMs but bullish for loan growth.</div>
+          </div>
+          <div class="stock-card binary">
+            <div class="stock-card-header"><div><div class="stock-ticker-big">5347</div><div class="stock-name">Tenaga Nasional</div></div><span class="stock-catalyst-tag">Utility + Energy Price Reset</span><span class="stock-bias-tag bias-binary">⚡ BINARY</span></div>
+            <div class="stock-body"><strong>Catalyst:</strong> Tenaga slipped 4 sen to RM14.28 in recent session. As Malaysia's monopoly power utility, lower energy input costs could improve margins, but regulated tariff structures limit upside pass-through. <strong>Binary angle:</strong> If oil stays low → fuel cost savings. If government mandates lower tariffs given cheaper fuel → revenue impact. Watch for any Energy Commission or government tariff review announcements.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="my-stocks">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🌊</span><span class="section-title">Broader Market Themes</span>
+          <span class="section-tag">4 Key Themes</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="theme-card"><span class="theme-number" style="background:var(--my-color)">1</span><span class="theme-title">Oil Crash — Net Negative for Malaysia</span><div class="theme-body">Unlike Singapore, <strong>Malaysia is a net oil exporter</strong>. The -12% WTI crash directly hits government revenues (Petronas dividends fund ~20% of the federal budget), energy sector stocks, and petrochemical names. The Ringgit typically weakens on oil price drops due to Malaysia's commodity export correlation.</div></div>
+          <div class="theme-card"><span class="theme-number" style="background:var(--my-color)">2</span><span class="theme-title">CPO at Crossroads — RM4,400 Support Critical</span><div class="theme-body">Crude Palm Oil is Malaysia's second key commodity. With exports down 34–35% (Apr 1–15), India imports collapsing 19% MoM, and biodiesel premium shrinking on oil crash, CPO faces a confluence of headwinds. The Plantation Index (-34.88 pts) reflects this. <strong>RM4,400/ton</strong> is the key support level — a break below would pressure Sime Darby, IOI, KL Kepong meaningfully.</div></div>
+          <div class="theme-card"><span class="theme-number" style="background:var(--my-color)">3</span><span class="theme-title">Banks as the Safe Harbour</span><div class="theme-body">In a day dominated by commodity headwinds, <strong>Malaysian banks are the defensive trade</strong>. Financial Services Index surged +149 pts. Maybank, CIMB, Public Bank, and RHB all seeing buying. Stable BNM OPR, solid domestic credit growth, and GLC dividend flows (EPF, Tabung Haji are major bank shareholders) provide a floor.</div></div>
+          <div class="theme-card"><span class="theme-number" style="background:var(--my-color)">4</span><span class="theme-title">KLCI Structural Reform — Expansion Potential</span><div class="theme-body">Kenanga Research noted that an <strong>FBM KLCI expansion</strong> (currently 30 constituents) could improve market diversity and attract foreign institutional flows. This is a medium-term structural catalyst — watch for Bursa Malaysia or Securities Commission announcements on index reform, which could re-rate smaller cap quality stocks that may be included.</div></div>
+        </div>
+      </div>
+
+      <div class="section" id="my-themes">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">📰</span><span class="section-title">Secondary Names</span>
+          <span class="section-tag">Fresh News &amp; Read-Throughs</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="secondary-list">
+            <div class="secondary-item"><span class="secondary-ticker">1961 IOI Corp</span><span class="secondary-note">Palm oil + oleochemicals; CPO price sensitivity</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">2445 KL Kepong</span><span class="secondary-note">Plantation — CPO export weakness read-through</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">3816 MISC</span><span class="secondary-note">Petronas shipping arm; oil price + tanker rate sensitivity</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">7277 Dialog</span><span class="secondary-note">Petronas tank terminal; oil sector capex watch</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">5225 IHH Healthcare</span><span class="secondary-note">Slipped 4 sen; healthcare resilience vs. macro volatility</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">6888 Axiata</span><span class="secondary-note">Telco; defensive yield; ASEAN data growth story</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">6012 Maxis</span><span class="secondary-note">Domestic telco; stable dividend; watch 5G monetisation progress</span></div>
+            <div class="secondary-item"><span class="secondary-ticker">5168 Hartalega</span><span class="secondary-note">Glovemaker — watch for any global health demand catalyst</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section" id="my-week">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">🗓️</span><span class="section-title">Week Ahead — Malaysia</span>
+          <span class="section-tag">Apr 21 – Apr 25</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <table class="week-table">
+            <thead><tr><th>Day</th><th>Bursa / MY Events</th><th>Global Impact on MY</th></tr></thead>
+            <tbody>
+              <tr class="week-today-row"><td class="week-day">📍 Tue Apr 21</td><td class="week-events">Oil crash reaction — Petronas names, energy sector · CPO RM4,400 support watch · Banks as defensive play</td><td class="week-events">US Retail Sales · Iran ceasefire expiry (oil binary for MY energy names)</td></tr>
+              <tr><td class="week-day">Wed Apr 22</td><td class="week-events">MYR/USD reaction to oil stability · CPO daily price · Plantation sector rebound or extend slide</td><td class="week-events">TSLA earnings · US rate outlook commentary</td></tr>
+              <tr><td class="week-day">Thu Apr 23</td><td class="week-events">Mid-April CPO cargo survey (second half) release · Bursa Q1 corporate filings watch</td><td class="week-events">US jobless claims</td></tr>
+              <tr><td class="week-day">Fri Apr 24</td><td class="week-events">End-of-week GLC institutional flows · KLCI 1,694 support hold check</td><td class="week-events">UMich Sentiment</td></tr>
+              <tr><td class="week-day" style="color:var(--purple)">Next Week</td><td class="week-events">BNM MPC meeting watch · Malaysia trade data · Bursa Q1 results season begins</td><td class="week-events">FOMC · US mega-cap AI earnings</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:12px;padding:10px 14px;background:#3a1a1a;border-radius:6px;border:1px solid #5a2d2d;font-size:12px;color:var(--red);">⚠ <strong>Key Risk:</strong> If Iran ceasefire breaks down and oil reverses upward → Petronas names recover but Malaysia gets stagflation risk. If oil stays low → plantation sector remains under pressure from CPO-biodiesel premium erosion.</div>
+        </div>
+      </div>
+
+      <div class="section" id="my-watchlist">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-icon">💡</span><span class="section-title">Trader's Watchlist</span>
+          <span class="section-tag">CPO · BNM · Energy</span><span class="section-chevron open">▶</span>
+        </div>
+        <div class="section-body">
+          <div class="watchlist-grid">
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--my-color)"></span><strong>CPO RM4,400 Support</strong><p>The critical level for plantation stocks. A break below triggers Sime Darby, IOI, KL Kepong sell-off. A bounce from RM4,400 = buy signal for beaten-down planters.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--my-color)"></span><strong>Petronas Chemicals (5183) — Oil Proxy</strong><p>Fell 14 sen in last session. Today's open will reflect the full -12% oil move. Watch for analyst downgrades and target price cuts during the morning session.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--my-color)"></span><strong>Maybank (1155) — Defensive Anchor</strong><p>RM11.16 recent close. Financial Services Index surging. In a day of commodity headwinds, Maybank is the safe harbour. Watch for EPF and institutional buying to support the stock.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--my-color)"></span><strong>USD/MYR — Commodity Currency Watch</strong><p>MYR typically weakens when oil drops (commodity currency correlation). Watch USD/MYR at ~4.45 — a move toward 4.50 signals MYR weakness; below 4.40 signals strength on improved risk appetite.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--my-color)"></span><strong>KLCI 1,694 Support Level</strong><p>Recent open at 1,691.42 with a gain to 1,694. Today's open facing headwinds — watch whether 1,690 holds. A break below 1,680 would be technically negative; hold above = range-bound consolidation.</p></div>
+            <div class="watch-item"><span class="watch-bullet" style="background:var(--my-color)"></span><strong>GLC Flows — EPF &amp; Tabung Haji</strong><p>Government-linked institutional buyers (EPF owns stakes in Maybank, CIMB, Tenaga) often step in on sharp down days. Watch for late-session buying support in KLCI heavyweights if early sell-off is steep.</p></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end MY briefing -->
+
+    <div class="empty-state" style="display:none">
+      <div class="empty-state-icon">🇲🇾</div>
+      <div class="empty-state-title">Malaysia Market Rundown</div>
+      <div class="empty-state-desc">No briefings yet for the Malaysia (Bursa) market. Run the on-demand task from the Scheduled section to generate today's KLCI briefing.</div>
+      <div class="market-info-grid">
+        <div class="market-info-card my">
+          <h4>🏛️ Exchange</h4>
+          <p>Bursa Malaysia<br>Main Market · ACE Market · LEAP Market</p>
+        </div>
+        <div class="market-info-card my">
+          <h4>🕐 Trading Hours</h4>
+          <p>Morning: 9:00–12:30 MYT<br>Afternoon: 14:30–17:00 MYT<br>Pre-open: 8:30–9:00 MYT</p>
+        </div>
+        <div class="market-info-card my">
+          <h4>📊 Key Indices</h4>
+          <p>FTSE Bursa Malaysia KLCI<br>FBM Emas · FBM Small Cap<br>FBM ACE Index</p>
+        </div>
+        <div class="market-info-card my">
+          <h4>💱 Currency</h4>
+          <p>Malaysian Ringgit (MYR)<br>Managed float vs. USD basket<br>USD/MYR: ~4.45</p>
+        </div>
+        <div class="market-info-card my">
+          <h4>📰 Key Sources</h4>
+          <p>BursaMalaysia.com · The Edge MY<br>The Star Business · Bernama<br>Bank Negara Malaysia</p>
+        </div>
+        <div class="market-info-card my">
+          <h4>🔥 Stocks to Watch</h4>
+          <p>Maybank (1155) · Public Bank (1295)<br>Tenaga (5347) · Petronas Chemicals (5183)<br>IHH Healthcare (5225) · CIMB (1023)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end wrapper -->
+
+<div class="footer">
+  Daily Market Rundown · US market auto-runs weekdays 8:30 AM · HK / SG / MY available on demand via Scheduled section<br>
+  Delivered to chong.liong@angelite.asia · All data sourced from public financial news sources
+</div>
+
+<script>
+  /* ── ACTIVE MARKET TRACKER ── */
+  let activeMarket = 'us';
+
+  /* ── NAV SCROLL ── */
+  function navTo(sectionName) {
+    const id = activeMarket + '-' + sectionName;
+    const el = document.getElementById(id) || document.getElementById(sectionName);
+    if (el) {
+      const body = el.querySelector('.section-body');
+      const chevron = el.querySelector('.section-chevron');
+      if (body && body.classList.contains('collapsed')) {
+        body.classList.remove('collapsed');
+        if (chevron) chevron.classList.add('open');
+      }
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  /* ── LIVE CLOCK ── */
+  function updateTime() {
+    const now = new Date();
+    const etTime = now.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const sgtTime = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Singapore',  hour: '2-digit', minute: '2-digit', hour12: false });
+    document.getElementById('live-time').textContent = `ET ${etTime}  |  SGT/MYT/HKT ${sgtTime}`;
+  }
+  updateTime();
+  setInterval(updateTime, 1000);
+
+  /* ── MARKET STATUS (rough live logic) ── */
+  function updateMarketStatus() {
+    const now = new Date();
+    // HKT = UTC+8
+    const hkHour = (now.getUTCHours() + 8) % 24;
+    const hkMin  = now.getUTCMinutes();
+    const hkTime = hkHour + hkMin / 60;
+    const isHKOpen = hkTime >= 9.5 && hkTime < 12 || hkTime >= 13 && hkTime < 16;
+    document.getElementById('hk-status').textContent = isHKOpen ? 'Open' : (hkTime >= 9 && hkTime < 9.5 ? 'Pre-Open' : 'Closed');
+    document.getElementById('hk-status').className = 'mkt-status-time ' + (isHKOpen ? 'status-open' : (hkTime >= 9 && hkTime < 9.5 ? 'status-pre' : 'status-closed'));
+
+    // SGT = UTC+8 (same as HKT)
+    const isSGOpen = hkTime >= 9 && hkTime < 12.5 || hkTime >= 14 && hkTime < 17;
+    document.getElementById('sg-status').textContent = isSGOpen ? 'Open' : (hkTime >= 8.5 && hkTime < 9 ? 'Pre-Open' : 'Closed');
+    document.getElementById('sg-status').className = 'mkt-status-time ' + (isSGOpen ? 'status-open' : (hkTime >= 8.5 && hkTime < 9 ? 'status-pre' : 'status-closed'));
+
+    // MYT = UTC+8 (same)
+    const isMYOpen = hkTime >= 9 && hkTime < 12.5 || hkTime >= 14.5 && hkTime < 17;
+    document.getElementById('my-status').textContent = isMYOpen ? 'Open' : (hkTime >= 8.5 && hkTime < 9 ? 'Pre-Open' : 'Closed');
+    document.getElementById('my-status').className = 'mkt-status-time ' + (isMYOpen ? 'status-open' : (hkTime >= 8.5 && hkTime < 9 ? 'status-pre' : 'status-closed'));
+
+    // US ET: UTC-4 (EDT)
+    const etHour = ((now.getUTCHours() - 4) + 24) % 24;
+    const etMin  = now.getUTCMinutes();
+    const etTime2 = etHour + etMin / 60;
+    const isUSOpen = etTime2 >= 9.5 && etTime2 < 16;
+    const isUSPre  = etTime2 >= 4 && etTime2 < 9.5;
+    document.getElementById('us-status').textContent = isUSOpen ? 'Open' : (isUSPre ? 'Pre-Market' : 'Closed');
+    document.getElementById('us-status').className = 'mkt-status-time ' + (isUSOpen ? 'status-open' : (isUSPre ? 'status-pre' : 'status-closed'));
+  }
+  updateMarketStatus();
+  setInterval(updateMarketStatus, 30000);
+
+  /* ── MARKET SWITCHER ── */
+  function switchMarket(market, btn) {
+    activeMarket = market;  // update global tracker for navTo
+
+    // Hide all panels
+    document.querySelectorAll('.market-panel').forEach(p => p.classList.remove('visible'));
+    document.getElementById('panel-' + market).classList.add('visible');
+
+    // Update tab active state
+    document.querySelectorAll('.market-tab').forEach(t => {
+      t.className = t.className.replace(/active-\w+/g, '').trim();
+    });
+    btn.classList.add('active-' + market);
+
+    // Update archive bar to show only this market's dates
+    document.querySelectorAll('.archive-date-btn').forEach(b => {
+      b.style.display = b.classList.contains('market-' + market) ? '' : 'none';
+    });
+
+    // Auto-show first available briefing for this market
+    const firstBtn = document.querySelector('.archive-date-btn.market-' + market);
+    if (firstBtn) {
+      document.querySelectorAll('.archive-date-btn').forEach(b => b.classList.remove('active'));
+      firstBtn.classList.add('active');
+      const id = firstBtn.getAttribute('data-briefing-id');
+      if (id) {
+        document.querySelectorAll('.briefing').forEach(b => b.style.display = 'none');
+        const target = document.getElementById('briefing-' + id);
+        if (target) target.style.display = 'block';
+      }
+    }
+  }
+
+  /* ── SECTION COLLAPSE ── */
+  function toggleSection(header) {
+    const body = header.nextElementSibling;
+    const chevron = header.querySelector('.section-chevron');
+    if (body.classList.contains('collapsed')) {
+      body.classList.remove('collapsed');
+      chevron.classList.add('open');
+    } else {
+      body.classList.add('collapsed');
+      chevron.classList.remove('open');
+    }
+  }
+
+  /* ── ARCHIVE DATE SWITCHER ── */
+  function showBriefing(briefingId, btn) {
+    document.querySelectorAll('.briefing').forEach(b => b.style.display = 'none');
+    const target = document.getElementById('briefing-' + briefingId);
+    if (target) target.style.display = 'block';
+    document.querySelectorAll('.archive-date-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // Init: show only US archive dates
+  document.querySelectorAll('.archive-date-btn').forEach(b => {
+    if (!b.classList.contains('market-us')) b.style.display = 'none';
+    b.setAttribute('data-briefing-id', b.getAttribute('onclick').match(/'([^']+)'/)?.[1] || '');
+  });
+
+  // Fix archive buttons to pass 'this'
+  document.querySelectorAll('.archive-date-btn').forEach(b => {
+    const id = b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+    if (id) {
+      b.onclick = function() { showBriefing(id, this); };
+    }
+  });
+</script>
+
+</body>
+</html>
